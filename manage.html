@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <title>จัดการสินค้า | Bemind Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="manage.html" class="list-group-item list-group-item-action active"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                    <h5 class="m-0 fw-bold">จัดการฐานข้อมูลสินค้า</h5>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary shadow-sm" onclick="forceClearCache()" id="cacheBtn">
+                        <i class="bi bi-arrow-clockwise"></i> อัปเดตข้อมูล
+                    </button>
+                    <button class="btn btn-teal shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+                        <i class="bi bi-plus-lg me-1"></i> เพิ่มสินค้าใหม่
+                    </button>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="card-custom p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3">รหัสสินค้า</th>
+                                    <th>ชื่อสินค้า</th>
+                                    <th>หมวดหมู่</th>
+                                    <th class="text-center">แจ้งเตือนต่ำสุด</th>
+                                    <th class="text-center">คงเหลือปัจจุบัน</th>
+                                    <th class="pe-4 text-end">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="product-table-body">
+                                <tr><td colspan="6" class="text-center py-5 text-muted">กำลังโหลดข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold">เพิ่มสินค้าใหม่</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addForm">
+                        <div class="mb-3 text-start">
+                            <label class="form-label small fw-bold">รหัสสินค้า (ID)</label>
+                            <input type="text" id="new-id" class="form-control" placeholder="เช่น BM-001" required>
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label class="form-label small fw-bold">ชื่อสินค้า</label>
+                            <input type="text" id="new-name" class="form-control" placeholder="เช่น เสื้อยืดลายไทย" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3 text-start">
+                                <label class="form-label small fw-bold">หมวดหมู่</label>
+                                <input type="text" id="new-cat" class="form-control" placeholder="เช่น เสื้อผ้า">
+                            </div>
+                            <div class="col-6 mb-3 text-start">
+                                <label class="form-label small fw-bold">แจ้งเตือนขั้นต่ำ</label>
+                                <input type="number" id="new-min" class="form-control" value="10" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-teal w-100 py-3 mt-2 shadow-sm">บันทึกข้อมูลสินค้า</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🛑 นำ API URL ของคุณมาใส่ตรงนี้
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+
+        window.onload = function() {
+            if(!localStorage.getItem('inventory_user')) { window.location.href = "index.html"; return; }
+            loadProducts();
+        }
+
+        async function loadProducts() {
+            document.getElementById('product-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดข้อมูล...</td></tr>';
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getProducts" }) });
+                const data = await res.json();
+                let html = '';
+                data.data.forEach(p => {
+                    const badgeClass = p.balance <= p.min ? 'bg-danger' : 'bg-success';
+                    html += `<tr>
+                        <td class="ps-4 fw-bold">${p.id}</td>
+                        <td>${p.name}</td>
+                        <td><span class="badge bg-light text-dark border">${p.cat}</span></td>
+                        <td class="text-center">${p.min}</td>
+                        <td class="text-center fw-bold text-primary fs-5">${p.balance}</td>
+                        <td class="pe-4 text-end"><span class="badge ${badgeClass} bg-opacity-10 text-${badgeClass.replace('bg-','')} border border-${badgeClass.replace('bg-','')} px-2">${p.status}</span></td>
+                    </tr>`;
+                });
+                document.getElementById('product-table-body').innerHTML = html;
+            } catch (err) {
+                document.getElementById('product-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-danger">ไม่สามารถเชื่อมต่อฐานข้อมูลได้</td></tr>';
+            }
+        }
+
+        // 🟢 ฟังก์ชันสำหรับล้าง Cache เมื่อกดปุ่ม "อัปเดตข้อมูล"
+        async function forceClearCache() {
+            const btn = document.getElementById('cacheBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังดึงข้อมูล...';
+            
+            try {
+                const res = await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: "clearCache" }) 
+                });
+                const result = await res.json();
+                
+                if(result.success) {
+                    // ล้างเสร็จแล้ว ก็สั่งให้โหลดตารางสินค้าใหม่เลย
+                    await loadProducts(); 
+                }
+            } catch(e) {
+                alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> อัปเดตข้อมูล';
+        }
+
+        document.getElementById('addForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const payload = {
+                action: "addProduct",
+                id: document.getElementById('new-id').value,
+                name: document.getElementById('new-name').value,
+                cat: document.getElementById('new-cat').value,
+                min: document.getElementById('new-min').value
+            };
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if(result.success) { alert(result.message); location.reload(); } else { alert(result.message); }
+        }
+
+        function logout() { localStorage.removeItem('inventory_user'); window.location.href = "index.html"; }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

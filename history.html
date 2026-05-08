@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <title>ประวัติรายการ | Bemind Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="history.html" class="list-group-item list-group-item-action active"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                    <h5 class="m-0 fw-bold">ประวัติการทำรายการทั้งหมด</h5>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="card-custom p-0 overflow-hidden">
+                    <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light" style="position: sticky; top: 0; z-index: 1;">
+                                <tr>
+                                    <th class="ps-4 py-3">วัน-เวลา</th>
+                                    <th>เลขที่บิล</th>
+                                    <th>ประเภท</th>
+                                    <th>สินค้า</th>
+                                    <th class="text-center">จำนวน</th>
+                                    <th>ช่องทาง/โปร</th>
+                                    <th>ผู้ทำรายการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr><td colspan="7" class="text-center py-5"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+
+        window.onload = async function() {
+            if(!localStorage.getItem('inventory_user')) window.location.href = "index.html";
+            
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getHistory" }) });
+                const data = await res.json();
+                
+                let html = '';
+                data.data.forEach(h => {
+                    const color = h.type === 'รับเข้า' ? 'text-teal' : 'text-pink';
+                    html += `<tr>
+                        <td class="ps-4 text-muted small">${h.date}</td>
+                        <td><span class="badge bg-light text-dark border">${h.bill}</span></td>
+                        <td class="fw-bold ${color}">${h.type}</td>
+                        <td>${h.name} <br><small class="text-muted">${h.id}</small></td>
+                        <td class="text-center fw-bold fs-5">${h.qty}</td>
+                        <td class="small">${h.channel} / ${h.promo}</td>
+                        <td>${h.user}</td>
+                    </tr>`;
+                });
+                document.getElementById('history-table-body').innerHTML = html || '<tr><td colspan="7" class="text-center py-5 text-muted">ไม่มีข้อมูลประวัติรายการ</td></tr>';
+            } catch (err) {
+                document.getElementById('history-table-body').innerHTML = '<tr><td colspan="7" class="text-center py-5 text-danger">ไม่สามารถโหลดข้อมูลได้</td></tr>';
+            }
+        }
+
+        function logout() { localStorage.removeItem('inventory_user'); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>

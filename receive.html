@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รับเข้าสินค้า | Bemind Stock</title>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action active"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="import.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-excel me-2"></i> อัปโหลดไฟล์ Excel</a>
+                <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="history.html" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
+                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom">
+                <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                <h5 class="m-0 fw-bold"><i class="bi bi-box-arrow-in-down text-teal"></i> บันทึกรับเข้าสินค้า (IN)</h5>
+            </nav>
+
+            <div class="container-fluid p-4" style="max-width: 900px; margin: 0 auto;">
+                <div class="card-custom p-4 mb-4">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2 text-teal"><i class="bi bi-info-circle me-2"></i>ข้อมูลเอกสารอ้างอิง</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">วันที่รับเข้า (ปล่อยว่าง=วันนี้)</label>
+                            <input type="date" id="docDate" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">แนบเอกสาร/รูปภาพ (ถ้ามี)</label>
+                            <input type="file" id="attachFile" class="form-control form-control-sm" accept="image/*, .pdf">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">หมายเหตุรวม (เช่น รับของลอตที่ 2, บิลเลขที่ 1234)</label>
+                            <input type="text" id="remark" class="form-control form-control-sm" placeholder="ระบุรายละเอียดเพิ่มเติม">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <h6 class="fw-bold m-0 text-teal"><i class="bi bi-box-seam me-2"></i>รายการสินค้าที่รับเข้า</h6>
+                        <button type="button" class="btn btn-sm btn-outline-teal shadow-sm" onclick="addRow()">
+                            <i class="bi bi-plus-lg"></i> เพิ่มรายการ
+                        </button>
+                    </div>
+
+                    <form id="receiveForm" onsubmit="submitReceive(event)">
+                        <div class="table-responsive">
+                            <table class="table table-borderless align-middle mb-2">
+                                <thead class="border-bottom small text-muted">
+                                    <tr>
+                                        <th>เลือกสินค้า <span class="text-danger">*</span></th>
+                                        <th style="width: 25%;">จำนวน (ชิ้น) <span class="text-danger">*</span></th>
+                                        <th style="width: 50px;" class="text-center">ลบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsList">
+                                    <!-- แถวสินค้าจะถูกเพิ่มที่นี่ -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <button type="submit" class="btn btn-teal px-5 py-2 shadow-sm w-100" id="submitBtn">
+                                <i class="bi bi-cloud-arrow-up me-2"></i> บันทึกรับเข้าสต๊อกทั้งหมด
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🛑 ใส่ API URL ของคุณที่นี่
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+        let productOptionsHTML = '<option value="">-- โหลดข้อมูลไม่สำเร็จ --</option>';
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+
+        window.onload = function() {
+            if(!localStorage.getItem('inventory_user')) window.location.href = "index.html";
+            loadProducts();
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getInitData" }) });
+                const result = await res.json();
+                if(result.success) {
+                    productOptionsHTML = '<option value="" disabled selected>-- ค้นหาและเลือกสินค้า --</option>';
+                    result.data.products.forEach(p => {
+                        productOptionsHTML += `<option value="${p.id}">${p.id} - ${p.name}</option>`;
+                    });
+                    addRow(); // เพิ่มแถวแรกให้อัตโนมัติหลังจากโหลดสินค้าเสร็จ
+                }
+            } catch(e) {
+                alert("เกิดข้อผิดพลาดในการดึงฐานข้อมูลสินค้า");
+            }
+        }
+
+        // 🟢 ฟังก์ชันเพิ่มแถวสินค้า
+        function addRow() {
+            const tbody = document.getElementById('itemsList');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-1">
+                    <select class="form-select form-select-sm border-teal product-select" required>
+                        ${productOptionsHTML}
+                    </select>
+                </td>
+                <td class="p-1">
+                    <input type="number" class="form-control form-control-sm text-center fw-bold qty-input" min="1" placeholder="จำนวน" required>
+                </td>
+                <td class="p-1 text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // 🟢 ฟังก์ชันลบแถวสินค้า
+        function removeRow(btn) {
+            const tbody = document.getElementById('itemsList');
+            if (tbody.children.length > 1) {
+                btn.closest('tr').remove();
+            } else {
+                alert("ต้องมีสินค้าอย่างน้อย 1 รายการครับ");
+            }
+        }
+
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function submitReceive(e) {
+            e.preventDefault();
+            
+            // 🟢 รวบรวมข้อมูลสินค้าทั้งหมดจากตาราง
+            const rows = document.querySelectorAll('#itemsList tr');
+            let itemsToSave = [];
+            let isValid = true;
+
+            rows.forEach(row => {
+                const productId = row.querySelector('.product-select').value;
+                const qty = row.querySelector('.qty-input').value;
+                
+                if (!productId || qty <= 0) {
+                    isValid = false;
+                } else {
+                    itemsToSave.push({ productId: productId, qty: parseInt(qty) });
+                }
+            });
+
+            if (!isValid || itemsToSave.length === 0) {
+                alert("กรุณาเลือกสินค้าและระบุจำนวนให้ครบถ้วนทุกรายการ");
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึกและอัปโหลดไฟล์...';
+
+            let payload = {
+                action: "saveTransaction",
+                type: "รับเข้า",
+                date: document.getElementById('docDate').value,
+                user: localStorage.getItem('inventory_user'),
+                remark: document.getElementById('remark').value,
+                items: itemsToSave // 🟢 ส่งเป็น Array หลายรายการไปให้หลังบ้านจัดการทีเดียว
+            };
+
+            const fileInput = document.getElementById('attachFile');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                try {
+                    payload.fileBase64 = await getBase64(file);
+                    payload.fileName = file.name;
+                    payload.fileMimeType = file.type;
+                } catch (error) {
+                    alert("เกิดข้อผิดพลาดในการอ่านไฟล์");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-2"></i> บันทึกรับเข้าสต๊อกทั้งหมด';
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.success) {
+                    alert(`✅ บันทึกรับเข้าสำเร็จทั้งหมด ${itemsToSave.length} รายการ!`);
+                    window.location.href = "dashboard.html";
+                } else {
+                    alert('❌ ผิดพลาด: ' + result.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-2"></i> บันทึกรับเข้าสต๊อกทั้งหมด';
+                }
+            } catch(error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-2"></i> บันทึกรับเข้าสต๊อกทั้งหมด';
+            }
+        }
+    </script>
+</body>
+</html>

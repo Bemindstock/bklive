@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อัปโหลดไฟล์สต๊อก | Bemind Stock</title>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="import.html" class="list-group-item list-group-item-action active"><i class="bi bi-file-earmark-excel me-2"></i> อัปโหลดไฟล์ Excel</a>
+                <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="history.html" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
+                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom">
+                <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                <h5 class="m-0 fw-bold"><i class="bi bi-file-earmark-excel text-success"></i> นำเข้าข้อมูลเบิกออก (Excel)</h5>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="card-custom mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">ระบุเดือน</label>
+                            <input type="month" id="import-month" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-primary">ประเภทไฟล์</label>
+                            <select id="file-type" class="form-select border-primary bg-primary bg-opacity-10 fw-bold text-primary">
+                                <option value="normal">📝 สินค้าปกติ (BM)</option>
+                                <option value="boxset">🎁 สินค้า Boxset</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold">เลือกไฟล์ .xlsx</label>
+                            <input type="file" id="excel-file" class="form-control" accept=".xlsx, .xls">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-success w-100 h-100 shadow-sm" onclick="processExcel()" id="readBtn">
+                                <i class="bi bi-search me-1"></i> อ่านไฟล์
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="preview-section" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold m-0 text-pink">
+                            ตรวจสอบรายการใหม่ (<span id="count-row">0</span> รายการ)
+                            <span id="dup-count-text" class="text-muted fw-normal ms-2" style="font-size: 13px;"></span>
+                        </h6>
+                        <button class="btn btn-pink px-4 shadow-sm" onclick="confirmImport()" id="confirmBtn">
+                            ยืนยันการเบิกออกทั้งหมด <i class="bi bi-cloud-upload ms-1"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="card-custom p-0 overflow-hidden">
+                        <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0 small">
+                                <thead class="bg-light" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th class="ps-3">วันที่</th>
+                                        <th>ช่องทาง (Channel)</th>
+                                        <th>รหัสสินค้า</th>
+                                        <th style="width: 15%;">จำนวน (ชิ้น)</th>
+                                        <th style="width: 25%;">หมายเหตุ</th>
+                                        <th class="text-center pe-3">ลบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🛑 ใส่ API URL ของคุณที่นี่
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+        let importData = [];
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+
+        window.onload = function() {
+            if(!localStorage.getItem('inventory_user')) window.location.href = "index.html";
+            const now = new Date();
+            document.getElementById('import-month').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        async function processExcel() {
+            const fileEl = document.getElementById('excel-file');
+            const monthEl = document.getElementById('import-month').value;
+            const fileType = document.getElementById('file-type').value; 
+            
+            if (!fileEl.files[0]) { alert("กรุณาเลือกไฟล์ Excel"); return; }
+            if (!monthEl) { alert("กรุณาระบุเดือนของไฟล์"); return; }
+
+            const readBtn = document.getElementById('readBtn');
+            readBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>...';
+            readBtn.disabled = true;
+
+            let currentHistory = [];
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getHistory" }) });
+                const data = await res.json();
+                if(data.success) { currentHistory = data.data; }
+            } catch (err) {
+                console.log("Could not fetch history for duplicate check.");
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]]; 
+                const rows = XLSX.utils.sheet_to_json(sheet, {header: 1}); 
+
+                importData = []; 
+                let duplicateCount = 0;
+                
+                const CH_NORMAL = 'รายการสินค้าเบิก  Bemind';
+                const CH_BK = 'รายการสินค้าเบิก  Bemind  ( BK. )';
+                const CH_SUPPORT = 'รายการสินค้าเบิก  Bemind (สนับสนุนการขาย)';
+
+                // ==========================================
+                // 📦 ตั้งค่าตาราง: สินค้าปกติ
+                // ==========================================
+                const normalTop = [
+                    { col: 1, id: 'BM 1', channel: CH_NORMAL, remarkCol: 9 }, { col: 2, id: 'BM 2', channel: CH_NORMAL, remarkCol: 9 },
+                    { col: 3, id: 'BM 3', channel: CH_NORMAL, remarkCol: 9 }, { col: 4, id: 'BM 4', channel: CH_NORMAL, remarkCol: 9 },
+                    { col: 5, id: 'BM 12', channel: CH_NORMAL, remarkCol: 9 }, { col: 6, id: 'BM 13', channel: CH_NORMAL, remarkCol: 9 },
+                    { col: 7, id: 'BM 14', channel: CH_NORMAL, remarkCol: 9 },
+                    { col: 10, id: 'BM31', channel: CH_NORMAL, remarkCol: 16 }, { col: 11, id: 'BM32', channel: CH_NORMAL, remarkCol: 16 },
+                    { col: 12, id: 'BM33', channel: CH_NORMAL, remarkCol: 16 }, { col: 13, id: 'BM34', channel: CH_NORMAL, remarkCol: 16 },
+                    { col: 14, id: 'BM35', channel: CH_NORMAL, remarkCol: 16 },
+                    { col: 18, id: 'BM 1', channel: CH_BK, remarkCol: 24 }, { col: 19, id: 'BM 2', channel: CH_BK, remarkCol: 24 },
+                    { col: 20, id: 'BM 3', channel: CH_BK, remarkCol: 24 }, { col: 21, id: 'BM 4', channel: CH_BK, remarkCol: 24 },
+                    { col: 22, id: 'BM 12', channel: CH_BK, remarkCol: 24 },
+                    { col: 25, id: 'BM31', channel: CH_BK, remarkCol: 31 }, { col: 26, id: 'BM32', channel: CH_BK, remarkCol: 31 },
+                    { col: 27, id: 'BM33', channel: CH_BK, remarkCol: 31 }, { col: 28, id: 'BM34', channel: CH_BK, remarkCol: 31 },
+                    { col: 29, id: 'BM35', channel: CH_BK, remarkCol: 31 }
+                ];
+                const normalBottom = [
+                    { col: 1, id: 'BM 1', channel: CH_SUPPORT, remarkCol: 9 }, { col: 2, id: 'BM 2', channel: CH_SUPPORT, remarkCol: 9 },
+                    { col: 3, id: 'BM 3', channel: CH_SUPPORT, remarkCol: 9 }, { col: 4, id: 'BM 4', channel: CH_SUPPORT, remarkCol: 9 },
+                    { col: 5, id: 'BM 12', channel: CH_SUPPORT, remarkCol: 9 }, { col: 6, id: 'BM 13', channel: CH_SUPPORT, remarkCol: 9 },
+                    { col: 7, id: 'BM 14', channel: CH_SUPPORT, remarkCol: 9 },
+                    { col: 10, id: 'BM31', channel: CH_SUPPORT, remarkCol: 16 }, { col: 11, id: 'BM32', channel: CH_SUPPORT, remarkCol: 16 },
+                    { col: 12, id: 'BM33', channel: CH_SUPPORT, remarkCol: 16 }, { col: 13, id: 'BM34', channel: CH_SUPPORT, remarkCol: 16 },
+                    { col: 14, id: 'BM35', channel: CH_SUPPORT, remarkCol: 16 }
+                ];
+
+                // ==========================================
+                // 🎁 ตั้งค่าตาราง: Boxset
+                // 🟢 ดึงหมายเหตุจากคอลัมน์ 5 และ 14 เรียบร้อยครับ!
+                // ==========================================
+                const boxsetBemind = [
+                    { col: 1, id: 'BM 7', channel: CH_NORMAL, remarkCol: 5 }, 
+                    { col: 2, id: 'BM 8', channel: CH_NORMAL, remarkCol: 5 },
+                    { col: 3, id: 'BM 9', channel: CH_NORMAL, remarkCol: 5 }
+                ];
+                const boxsetBK = [
+                    { col: 10, id: 'BM 7', channel: CH_BK, remarkCol: 14 }, 
+                    { col: 11, id: 'BM 8', channel: CH_BK, remarkCol: 14 },
+                    { col: 12, id: 'BM 9', channel: CH_BK, remarkCol: 14 }
+                ];
+                const boxsetSupport = [
+                    { col: 1, id: 'BM 7', channel: CH_SUPPORT, remarkCol: 5 }, 
+                    { col: 2, id: 'BM 8', channel: CH_SUPPORT, remarkCol: 5 },
+                    { col: 3, id: 'BM 9', channel: CH_SUPPORT, remarkCol: 5 }
+                ];
+
+                for (let i = 8; i < rows.length; i++) { 
+                    const row = rows[i];
+                    if(!row) continue;
+                    const day = row[0]; 
+                    
+                    if (Number.isInteger(day) && day >= 1 && day <= 31) {
+                        const fullDate = `${monthEl}-${String(day).padStart(2, '0')}`; 
+                        const [year, month, d] = fullDate.split('-');
+                        const checkDateStr = `${d}/${month}/${year}`; 
+
+                        let activeMappings = [];
+
+                        if (fileType === 'normal') {
+                            if (i >= 8 && i <= 41) activeMappings = normalTop;           
+                            else if (i >= 44 && i <= 77) activeMappings = normalBottom;  
+                        } 
+                        else if (fileType === 'boxset') {
+                            if (i >= 9 && i <= 42) activeMappings = [...boxsetBemind, ...boxsetBK]; 
+                            else if (i >= 48 && i <= 78) activeMappings = boxsetSupport;            
+                        }
+
+                        if(activeMappings.length > 0) {
+                            activeMappings.forEach(map => {
+                                const qty = parseInt(row[map.col]);
+                                if (qty > 0) {
+                                    const isDuplicate = currentHistory.some(h => 
+                                        h.type === 'เบิกออก' &&
+                                        h.date.startsWith(checkDateStr) &&
+                                        h.id === map.id &&
+                                        h.channel === map.channel && 
+                                        Number(h.qty) === qty
+                                    );
+
+                                    if (isDuplicate) {
+                                        duplicateCount++; 
+                                    } else {
+                                        importData.push({
+                                            id: Math.random().toString(16).slice(2),
+                                            date: fullDate,
+                                            productId: map.id,
+                                            qty: qty,
+                                            channel: map.channel, 
+                                            remark: row[map.remarkCol] || ''
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+                
+                if(duplicateCount > 0) {
+                    document.getElementById('dup-count-text').innerHTML = `<i class="bi bi-info-circle"></i> ตัดข้อมูลที่ซ้ำกับในระบบออกแล้ว ${duplicateCount} รายการ`;
+                } else {
+                    document.getElementById('dup-count-text').innerText = "";
+                }
+
+                renderPreview();
+                document.getElementById('preview-section').style.display = 'block';
+                
+                readBtn.innerHTML = '<i class="bi bi-search me-1"></i> อ่านไฟล์';
+                readBtn.disabled = false;
+            };
+            reader.readAsArrayBuffer(fileEl.files[0]);
+        }
+
+        function renderPreview() {
+            document.getElementById('count-row').innerText = importData.length;
+            const tbody = document.getElementById('preview-tbody');
+            
+            if (importData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">🎉 ไม่มีรายการใหม่ให้บันทึก (ทุกรายการถูกบันทึกเข้าระบบไปหมดแล้ว)</td></tr>';
+                document.getElementById('confirmBtn').disabled = true;
+                return;
+            }
+
+            let html = '';
+            importData.forEach((item) => {
+                html += `
+                <tr id="row-${item.id}">
+                    <td class="ps-3">${item.date}</td>
+                    <td><span class="badge bg-light text-dark border">${item.channel}</span></td>
+                    <td class="fw-bold text-teal">${item.productId}</td>
+                    <td><input type="number" class="form-control form-control-sm text-center fw-bold" value="${item.qty}" onchange="updateData('${item.id}', 'qty', this.value)" min="1"></td>
+                    <td><input type="text" class="form-control form-control-sm" value="${item.remark}" onchange="updateData('${item.id}', 'remark', this.value)"></td>
+                    <td class="text-center pe-3"><button class="btn btn-sm btn-outline-danger border-0" onclick="removeData('${item.id}')"><i class="bi bi-trash"></i></button></td>
+                </tr>`;
+            });
+            
+            tbody.innerHTML = html;
+            document.getElementById('confirmBtn').disabled = false;
+        }
+
+        function updateData(id, field, value) {
+            const index = importData.findIndex(item => item.id === id);
+            if(index !== -1) {
+                importData[index][field] = field === 'qty' ? parseInt(value) : value;
+            }
+        }
+
+        function removeData(id) {
+            importData = importData.filter(item => item.id !== id);
+            renderPreview();
+        }
+
+        function logout() { 
+            localStorage.removeItem('inventory_user'); 
+            window.location.href = "index.html"; 
+        }
+
+        async function confirmImport() {
+            if(importData.length === 0) return;
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึกข้อมูล...';
+
+            const payload = {
+                action: "saveTransaction",
+                type: "เบิกออก",
+                items: importData,
+                user: localStorage.getItem('inventory_user')
+            };
+
+            try {
+                const res = await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                });
+                const result = await res.json();
+                
+                if(result.success) {
+                    alert(`✅ อัปเดตสต๊อก ${importData.length} รายการสำเร็จ!`);
+                    window.location.href = "dashboard.html";
+                } else {
+                    alert(result.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'ยืนยันการเบิกออกทั้งหมด <i class="bi bi-cloud-upload ms-1"></i>';
+                }
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+                btn.disabled = false;
+                btn.innerHTML = 'ยืนยันการเบิกออกทั้งหมด <i class="bi bi-cloud-upload ms-1"></i>';
+            }
+        }
+    </script>
+</body>
+</html>

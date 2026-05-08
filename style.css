@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --brand-teal: #149E9A;
+    --brand-pink: #FA6BBA;
+    --bg-light: #FFF0F5;
+    --white: #ffffff;
+    --text-dark: #2D3436;
+    --text-muted: #636E72;
+}
+
+body {
+    font-family: 'Prompt', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* Sidebar */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 260px;
+    background-color: var(--white);
+    border-right: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.list-group-item {
+    border: none;
+    padding: 15px 25px;
+    color: var(--text-dark);
+    font-weight: 500;
+    transition: 0.2s;
+    border-radius: 12px;
+    margin: 4px 15px;
+    width: calc(100% - 30px); /* 🟢 สั่งให้หักลบขอบซ้ายขวาออก จะได้ไม่ล้น */
+    background-color: transparent; /* 🟢 สั่งให้พื้นหลังโปร่งใส กลืนไปกับ Sidebar */
+}
+
+.list-group-item:hover {
+    background-color: #f0f7f7;
+    color: var(--brand-teal);
+    transform: translateX(5px);
+}
+
+.list-group-item.active {
+    background-color: var(--brand-teal) !important;
+    border: none;
+}
+
+/* Cards */
+.card-custom {
+    background: var(--white);
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(20, 158, 154, 0.05);
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.btn-teal {
+    background-color: var(--brand-teal);
+    color: white;
+    border-radius: 12px;
+    padding: 10px 25px;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-teal:hover {
+    background-color: #108581;
+    color: white;
+}
+
+.btn-pink {
+    background-color: var(--brand-pink);
+    color: white;
+    border-radius: 12px;
+    padding: 10px 25px;
+    border: none;
+    font-weight: 600;
+}
+
+.form-control, .form-select {
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #E0E0E0;
+    background-color: #FAFAFA;
+}
+
+.form-control:focus {
+    border-color: var(--brand-teal);
+    box-shadow: 0 0 0 0.25rem rgba(20, 158, 154, 0.1);
+}
+
+#mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+}
+
+@media (max-width: 768px) {
+    #sidebar-wrapper { margin-left: -260px; position: fixed; z-index: 999; }
+    #wrapper.toggled #sidebar-wrapper { margin-left: 0; }
+    #wrapper.toggled #mobile-overlay { display: block; }
+}

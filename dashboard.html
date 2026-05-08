@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Bemind Stock</title>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .cal-header { font-weight: bold; text-align: center; padding: 10px 0; background: #f8f9fa; border-radius: 8px; }
+        .cal-day { min-height: 80px; padding: 5px; border: 1px solid #eee; border-radius: 8px; position: relative; background: #fff; transition: 0.2s;}
+        .cal-day.empty { background: transparent; border: none; }
+        .cal-day.today { border: 2px solid var(--brand-teal); }
+        .cal-day-active { cursor: pointer; }
+        .cal-day-active:hover { background-color: #fafafa; border-color: var(--brand-pink); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .cal-date-num { font-weight: bold; font-size: 14px; color: #666; }
+        .cal-badge { font-size: 11px; padding: 2px 5px; border-radius: 4px; display: block; margin-top: 3px; font-weight: 600;}
+        .cal-in { background-color: rgba(20, 158, 154, 0.1); color: var(--brand-teal); }
+        .cal-out { background-color: rgba(250, 107, 186, 0.1); color: var(--brand-pink); }
+    </style>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="dashboard.html" class="list-group-item list-group-item-action active"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="import.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-excel me-2"></i> อัปโหลดไฟล์ Excel</a>
+                <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="history.html" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom">
+                <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                <h5 class="m-0 fw-bold">ภาพรวมระบบ <span id="user-name" class="text-muted small"></span></h5>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card-custom border-start border-4" style="border-color: var(--brand-teal) !important;">
+                            <div class="text-muted small fw-bold">รับเข้าวันนี้</div>
+                            <h2 class="fw-bold mb-0" id="today-in">0</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-custom border-start border-4" style="border-color: var(--brand-pink) !important;">
+                            <div class="text-muted small fw-bold">เบิกออกวันนี้</div>
+                            <h2 class="fw-bold mb-0" id="today-out">0</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-custom bg-dark text-white">
+                            <div class="small fw-bold opacity-75">สต๊อกคงเหลือรวม</div>
+                            <h2 class="fw-bold mb-0" id="total-qty">0</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card-custom">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">ปฏิทินความเคลื่อนไหว <span class="badge bg-light text-muted fw-normal ms-2 border">💡 กดที่วันที่เพื่อดูรายละเอียด</span></h6>
+                                <div>
+                                    <button class="btn btn-sm btn-light border" onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+                                    <span id="cal-month-year" class="mx-2 fw-bold">...</span>
+                                    <button class="btn btn-sm btn-light border" onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid mb-2">
+                                <div class="cal-header text-danger">อา</div><div class="cal-header">จ</div><div class="cal-header">อ</div><div class="cal-header">พ</div><div class="cal-header">พฤ</div><div class="cal-header">ศ</div><div class="cal-header text-primary">ส</div>
+                            </div>
+                            <div id="calendar-body" class="calendar-grid"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card-custom">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">ยอดคงเหลือรายชิ้น</h6>
+                                <a href="manage.html" class="btn btn-sm btn-outline-teal" style="font-size: 12px;">จัดการสินค้า</a>
+                            </div>
+                            <div id="stock-list" class="list-group list-group-flush small" style="max-height: 400px; overflow-y: auto;">
+                                <div class="text-center py-3">
+                                    <span class="spinner-border spinner-border-sm"></span> กำลังโหลด...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🟢 Modal โชว์รายละเอียดรายวัน -->
+    <div class="modal fade" id="dayDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="modal-date-title"><i class="bi bi-calendar-check text-pink me-2"></i>รายละเอียดรายการ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-light">
+                    <div id="modal-details-list" class="list-group list-group-flush">
+                        <!-- รายการสินค้าจะมาโผล่ตรงนี้ -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 🛑 นำ API URL ที่ได้จากการ Deploy ใหม่มาใส่ตรงนี้
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+        
+        let calendarData = {};
+        let currentMonth = new Date();
+        currentMonth.setDate(1); 
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+
+        window.onload = async function() {
+            const user = localStorage.getItem('inventory_user');
+            if(!user) { window.location.href = "index.html"; return; }
+            document.getElementById('user-name').innerText = `| สวัสดี, ${user}`;
+            
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getDashboard" }) });
+                const data = await res.json();
+                
+                document.getElementById('today-in').innerText = data.todayIn + " ชิ้น";
+                document.getElementById('today-out').innerText = data.todayOut + " ชิ้น";
+                document.getElementById('total-qty').innerText = data.totalStockQty.toLocaleString() + " ชิ้น";
+                
+                calendarData = data.calendarData;
+                renderCalendar();
+
+                let stockHtml = '';
+                data.productBalances.forEach(p => {
+                    const isLow = p.balance <= p.min;
+                    const textColor = isLow ? 'var(--brand-pink)' : 'var(--text-dark)';
+                    const bgColor = isLow ? 'var(--brand-pink)' : 'var(--brand-teal)'; 
+                    
+                    stockHtml += `
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <div class="fw-bold text-truncate" style="max-width: 170px; color: ${textColor};">${p.name}</div>
+                                <div class="text-muted" style="font-size: 11px;">รหัส: ${p.id}</div>
+                            </div>
+                            <span class="badge rounded-pill px-3 py-2 fs-6 shadow-sm" style="background-color: ${bgColor}; color: white;">${p.balance}</span>
+                        </div>`;
+                });
+                document.getElementById('stock-list').innerHTML = stockHtml || '<div class="text-center py-3 text-muted">ไม่มีรายการสินค้า</div>';
+                
+            } catch (err) {
+                alert("ไม่สามารถโหลดข้อมูลแดชบอร์ดได้");
+            }
+        }
+
+        function changeMonth(step) {
+            currentMonth.setMonth(currentMonth.getMonth() + step);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+            document.getElementById('cal-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            let html = '';
+            for (let i = 0; i < firstDay; i++) { html += `<div class="cal-day empty"></div>`; }
+            
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dStr = String(d).padStart(2, '0');
+                const mStr = String(month + 1).padStart(2, '0');
+                const fullDate = `${year}-${mStr}-${dStr}`;
+                const isToday = fullDate === todayStr ? 'today' : '';
+                
+                let badges = '';
+                let hoverClass = '';
+                let clickAction = '';
+
+                // 🟢 ถ้าวันนั้นมีข้อมูล ให้เซ็ตคลาสให้ชี้เปลี่ยนสีได้ และใส่คำสั่งกดคลิก
+                if(calendarData[fullDate]) {
+                    hoverClass = 'cal-day-active';
+                    clickAction = `onclick="showDayDetails('${fullDate}')"`;
+                    
+                    if(calendarData[fullDate].in > 0) badges += `<div class="cal-badge cal-in">+ ${calendarData[fullDate].in} IN</div>`;
+                    if(calendarData[fullDate].out > 0) badges += `<div class="cal-badge cal-out">- ${calendarData[fullDate].out} OUT</div>`;
+                }
+
+                html += `<div class="cal-day ${isToday} ${hoverClass}" ${clickAction}><div class="cal-date-num">${d}</div>${badges}</div>`;
+            }
+            document.getElementById('calendar-body').innerHTML = html;
+        }
+
+        // 🟢 ฟังก์ชันสั่งให้ป๊อปอัปเด้งขึ้นมาโชว์ข้อมูล
+        function showDayDetails(dateStr) {
+            const data = calendarData[dateStr];
+            if(!data || !data.details || data.details.length === 0) return;
+            
+            // แปลงวันที่ให้สวยงาม (เช่น 2026-04-01 -> 1 เมษายน 2569)
+            const [y, m, d] = dateStr.split('-');
+            const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const displayDate = `${parseInt(d)} ${monthNames[parseInt(m)-1]} ${parseInt(y)+543}`;
+            
+            document.getElementById('modal-date-title').innerHTML = `<i class="bi bi-calendar-check text-pink me-2"></i>รายการวันที่ ${displayDate}`;
+            
+            let html = '';
+            data.details.forEach(item => {
+                let colorClass = item.type === 'รับเข้า' ? 'text-teal' : 'text-pink';
+                let sign = item.type === 'รับเข้า' ? '+' : '-';
+                let remarkText = item.remark && item.remark !== '-' ? item.remark : 'ไม่มีหมายเหตุ';
+                
+                html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <div class="fw-bold text-dark mb-1">${item.name}</div>
+                        <div class="small text-muted"><span class="badge bg-secondary bg-opacity-10 text-secondary me-1 border">${item.type}</span> ${remarkText}</div>
+                    </div>
+                    <div class="fw-bold fs-5 ${colorClass}">${sign}${item.qty}</div>
+                </div>`;
+            });
+            
+            document.getElementById('modal-details-list').innerHTML = html;
+            
+            // สั่งเปิด Modal ของ Bootstrap
+            var detailsModal = new bootstrap.Modal(document.getElementById('dayDetailsModal'));
+            detailsModal.show();
+        }
+
+        function logout() { localStorage.removeItem('inventory_user'); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>

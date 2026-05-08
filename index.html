@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <title>เข้าสู่ระบบ | Bemind Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100" style="background-color: var(--brand-teal);">
+    
+    <div class="card-custom text-center" style="width: 100%; max-width: 400px;">
+        <img src="logo.jpg" alt="Logo" style="width: 80px; height: 80px; border-radius: 20px;" class="mb-3 shadow-sm">
+        <h3 class="fw-bold mb-1" style="color: var(--brand-teal);">Bemind Stock</h3>
+        <p class="text-muted mb-4 small">ระบบจัดการคลังสินค้า V2.0</p>
+        
+        <form id="loginForm">
+            <div class="mb-3 text-start">
+                <label class="form-label small fw-bold">ไอดีล็อกอิน</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
+                    <input type="text" id="username" class="form-control border-0 bg-light" placeholder="Username" required>
+                </div>
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label small fw-bold">รหัสผ่าน</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="password" class="form-control border-0 bg-light" placeholder="Password" required>
+                </div>
+            </div>
+            <button type="submit" id="loginBtn" class="btn btn-teal w-100 py-3 shadow-sm">
+                เข้าสู่ระบบ <i class="bi bi-arrow-right ms-2"></i>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+
+        document.getElementById('loginForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังตรวจสอบ...';
+
+            const payload = {
+                action: "login",
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.success) {
+                    localStorage.setItem('inventory_user', result.name);
+                    localStorage.setItem('inventory_role', result.role);
+                    window.location.href = "dashboard.html";
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+            }
+            btn.disabled = false;
+            btn.innerHTML = 'เข้าสู่ระบบ <i class="bi bi-arrow-right ms-2"></i>';
+        }
+    </script>
+</body>
+</html>

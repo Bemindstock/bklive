@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สรุปรายงาน | Bemind Stock</title>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* 🟢 CSS สำหรับช่องที่แก้ไขได้ */
+        .editable-cell {
+            border: 1px dashed transparent;
+            transition: all 0.2s;
+        }
+        /* จะแสดงกรอบประสีเทาเมื่อเอาเมาส์ชี้ (เฉพาะคนที่มีสิทธิ์) */
+        .editable-cell:hover {
+            border: 1px dashed #adb5bd;
+            background-color: #fffde7 !important;
+            cursor: text;
+        }
+        .editable-cell:focus {
+            outline: 2px solid var(--brand-teal);
+            background-color: #ffffff !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="import.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-excel me-2"></i> อัปโหลดไฟล์ Excel</a>
+                <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="history.html" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
+                <a href="report.html" class="list-group-item list-group-item-action active"><i class="bi bi-file-earmark-pdf me-2"></i> สรุปรายงาน (PDF)</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom d-flex justify-content-between">
+                <div>
+                    <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                    <h5 class="m-0 fw-bold d-inline-block"><i class="bi bi-file-earmark-pdf text-danger"></i> รายงานความเคลื่อนไหวสต๊อก</h5>
+                </div>
+                <div id="adminBadge" style="display: none;">
+                    <span class="badge bg-warning text-dark"><i class="bi bi-pencil-square"></i> โหมดแก้ไขสำหรับแอดมิน</span>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="card-custom mb-4 p-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">ตั้งแต่วันที่</label>
+                            <input type="date" id="startDate" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">ถึงวันที่</label>
+                            <input type="date" id="endDate" class="form-control">
+                        </div>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button class="btn btn-teal w-100" onclick="generateReport()" id="searchBtn">
+                                <i class="bi bi-search me-1"></i> ดูรายงาน
+                            </button>
+                            <button class="btn btn-danger w-100 shadow-sm" onclick="exportToPDF()" id="exportBtn" style="display: none;">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> โหลด PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-custom p-0 overflow-hidden" id="reportCard" style="display: none;">
+                    <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-dark">สรุปยอดสินค้าในโกดัง (อ่านง่าย)</h6>
+                        <span class="badge bg-secondary" id="report-info"></span>
+                    </div>
+                    
+                    <!-- แจ้งเตือนแอดมิน -->
+                    <div id="editHint" class="bg-warning bg-opacity-10 text-dark p-2 text-center small fw-bold border-bottom" style="display: none;">
+                        💡 คุณคือ Admin: สามารถคลิกที่ตัวเลขและช่องหมายเหตุ เพื่อแก้ไขข้อมูลก่อนปรินท์ PDF ได้ (ไม่ส่งผลกระทบต่อสต๊อกจริง)
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0 small" id="reportTable">
+                            <thead class="bg-white" style="position: sticky; top: 0; z-index: 1;">
+                                <tr>
+                                    <th class="ps-4 border-bottom">รหัส</th>
+                                    <th class="border-bottom">ชื่อสินค้า</th>
+                                    <th class="text-center text-muted border-bottom" style="background-color: #f8f9fa;">📦 ของเดิมก่อนหน้า</th>
+                                    <th class="text-center text-success border-bottom" style="background-color: #f0fff4;">🟢 รับเข้าเพิ่ม (+)</th>
+                                    <th class="text-center text-danger border-bottom" style="background-color: #fff0f0;">🔴 เบิกออกไป (-)</th>
+                                    <th class="text-center text-primary border-bottom" style="background-color: #f0f8ff;">🛒 เหลือของจริงๆ (=)</th>
+                                    <th class="pe-4 border-bottom" style="width: 15%;">📝 หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-tbody">
+                                <tr><td colspan="7" class="text-center py-5">กำลังโหลดข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+        
+        let allProducts = [];
+        let allHistory = [];
+        let isAdmin = false; // 🟢 ตัวแปรเช็คสิทธิ์แอดมิน
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+        function logout() { localStorage.removeItem('inventory_user'); localStorage.removeItem('inventory_role'); window.location.href = "index.html"; }
+
+        window.onload = async function() {
+            if(!localStorage.getItem('inventory_user')) window.location.href = "index.html";
+            
+            // 🟢 เช็คสิทธิ์: (สมมติว่าถ้าล็อกอินด้วย id แอดมิน หรือมี Role เป็น Admin ให้เปิดโหมดแก้ไข)
+            const user = localStorage.getItem('inventory_user');
+            const role = localStorage.getItem('inventory_role');
+            if(role === 'Admin' || role === 'admin' || user === 'admin') {
+                isAdmin = true;
+                document.getElementById('adminBadge').style.display = 'block';
+            }
+
+            const date = new Date();
+            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+            document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('endDate').value = date.toISOString().split('T')[0];
+
+            await loadData();
+        }
+
+        async function loadData() {
+            try {
+                const resData = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getInitData" }) }).then(r => r.json());
+                const resHist = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getHistory" }) }).then(r => r.json());
+                
+                if(resData.success) allProducts = resData.data.products;
+                if(resHist.success) allHistory = resHist.data;
+            } catch(e) {
+                console.error("โหลดข้อมูลล้มเหลว", e);
+            }
+        }
+
+        function generateReport() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            if(!start || !end) { alert("กรุณาเลือกช่วงวันที่"); return; }
+
+            document.getElementById('reportCard').style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'block';
+            document.getElementById('report-info').innerText = `ข้อมูลระหว่างวันที่ ${start} ถึง ${end}`;
+            
+            if(isAdmin) document.getElementById('editHint').style.display = 'block';
+
+            let reportData = [];
+            const startD = new Date(start);
+            const endD = new Date(end);
+            endD.setHours(23, 59, 59);
+
+            allProducts.forEach(p => {
+                let pastIn = 0; let pastOut = 0;
+                let periodIn = 0; let periodOut = 0;
+
+                allHistory.forEach(h => {
+                    if(h.id.toString() === p.id.toString()) {
+                        let [d, m, y] = h.date.split(' ')[0].split('/');
+                        let hDate = new Date(`${y}-${m}-${d}`);
+                        
+                        if(hDate < startD) {
+                            if(h.type === 'รับเข้า') pastIn += Number(h.qty);
+                            if(h.type === 'เบิกออก') pastOut += Number(h.qty);
+                        } else if(hDate >= startD && hDate <= endD) {
+                            if(h.type === 'รับเข้า') periodIn += Number(h.qty);
+                            if(h.type === 'เบิกออก') periodOut += Number(h.qty);
+                        }
+                    }
+                });
+
+                let beginBalance = pastIn - pastOut; 
+                let finalBalance = beginBalance + periodIn - periodOut;
+
+                if(beginBalance !== 0 || periodIn > 0 || periodOut > 0 || finalBalance !== 0) {
+                    reportData.push({
+                        id: p.id, name: p.name, begin: beginBalance, in: periodIn, out: periodOut, balance: finalBalance
+                    });
+                }
+            });
+
+            const tbody = document.getElementById('report-tbody');
+            if(reportData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">ไม่พบข้อมูลสินค้าในระบบ</td></tr>';
+                return;
+            }
+
+            let html = '';
+            // 🟢 สร้างแอตทริบิวต์สำหรับให้ Admin แก้ไขได้
+            const editableTag = isAdmin ? 'contenteditable="true" class="editable-cell"' : '';
+
+            reportData.forEach(item => {
+                let balanceColor = item.balance < 0 ? 'text-danger' : 'text-primary';
+                
+                html += `
+                <tr>
+                    <td class="ps-4 fw-bold">${item.id}</td>
+                    <td>${item.name}</td>
+                    <td class="text-center text-muted fw-bold bg-light val-begin" ${editableTag} onblur="recalc(this)">${item.begin}</td>
+                    <td class="text-center text-success fw-bold val-in" style="background-color: #f8fff9;" ${editableTag} onblur="recalc(this)">${item.in}</td>
+                    <td class="text-center text-danger fw-bold val-out" style="background-color: #fff9f9;" ${editableTag} onblur="recalc(this)">${item.out}</td>
+                    <td class="text-center ${balanceColor} fw-bold val-balance" style="background-color: #f8fbff; font-size: 15px;" ${editableTag}>${item.balance}</td>
+                    <td class="pe-4 text-secondary val-remark" ${editableTag}>-</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // 🟢 ฟังก์ชันคำนวณยอดใหม่ทันที เมื่อแอดมินพิมพ์ตัวเลขเสร็จ
+        function recalc(el) {
+            if(!isAdmin) return;
+            const tr = el.closest('tr');
+            
+            // ดึงค่ามาลบเครื่องหมายแปลกๆ ออก เพื่อแปลงเป็นตัวเลข
+            const begin = Number(tr.querySelector('.val-begin').innerText.replace(/,/g, '').trim()) || 0;
+            const inQty = Number(tr.querySelector('.val-in').innerText.replace(/,/g, '').trim()) || 0;
+            const outQty = Number(tr.querySelector('.val-out').innerText.replace(/,/g, '').trim()) || 0;
+            
+            // คำนวณยอดคงเหลือใหม่
+            const newBalance = begin + inQty - outQty;
+            const balanceTd = tr.querySelector('.val-balance');
+            balanceTd.innerText = newBalance;
+
+            // เปลี่ยนสีถ้าติดลบ
+            if(newBalance < 0) {
+                balanceTd.classList.replace('text-primary', 'text-danger');
+            } else {
+                balanceTd.classList.replace('text-danger', 'text-primary');
+            }
+        }
+
+        function exportToPDF() {
+            const btn = document.getElementById('exportBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง PDF...';
+            btn.disabled = true;
+
+            // 🟢 ปิดกรอบแก้ไขชั่วคราว เพื่อไม่ให้ติดไปใน PDF
+            document.querySelectorAll('.editable-cell').forEach(el => el.classList.remove('editable-cell'));
+
+            const pdfContainer = document.createElement('div');
+            pdfContainer.style.padding = '20px';
+            pdfContainer.style.fontFamily = "'Sarabun', sans-serif";
+            pdfContainer.style.color = '#333';
+
+            const dateText = document.getElementById('report-info').innerText;
+            pdfContainer.innerHTML = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="logo.jpg" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;" onerror="this.style.display='none'">
+                    <h2 style="margin: 0; color: #008080; font-weight: bold; font-family: 'Sarabun', sans-serif;">บริษัท Bemind</h2>
+                    <h4 style="margin: 10px 0 5px 0; font-family: 'Sarabun', sans-serif;">รายงานสรุปความเคลื่อนไหวสต๊อกสินค้า</h4>
+                    <p style="margin: 0; color: #666; font-size: 14px; font-family: 'Sarabun', sans-serif;">${dateText}</p>
+                </div>
+            `;
+
+            const tableClone = document.getElementById('reportTable').cloneNode(true);
+            tableClone.classList.remove('table-hover');
+            tableClone.style.width = '100%';
+            tableClone.style.borderCollapse = 'collapse';
+            tableClone.style.fontSize = '12px';
+
+            const cells = tableClone.querySelectorAll('th, td');
+            cells.forEach(cell => {
+                cell.style.border = '1px solid #dee2e6';
+                cell.style.padding = '8px';
+                cell.style.fontFamily = "'Sarabun', sans-serif";
+            });
+
+            pdfContainer.appendChild(tableClone);
+
+            const printDate = new Date().toLocaleString('th-TH');
+            const footer = document.createElement('div');
+            footer.innerHTML = `<p style="text-align: right; font-size: 10px; color: #999; margin-top: 20px; font-family: 'Sarabun', sans-serif;">พิมพ์เมื่อ: ${printDate}</p>`;
+            pdfContainer.appendChild(footer);
+
+            const opt = {
+                margin:       10,
+                filename:     'Bemind_Stock_Report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                // 🟢 คืนค่ากรอบแก้ไขกลับมาให้แอดมินใช้งานต่อ
+                if(isAdmin) {
+                    document.querySelectorAll('td[contenteditable="true"]').forEach(el => el.classList.add('editable-cell'));
+                }
+                btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> โหลด PDF';
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

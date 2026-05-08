@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <title>เบิกสินค้าออก | Bemind Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <div id="mobile-overlay" onclick="toggleMenu()"></div>
+        
+        <div id="sidebar-wrapper">
+            <div class="text-center py-4 border-bottom">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
+                <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
+                <a href="issue.html" class="list-group-item list-group-item-action active"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
+                <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
+                <a href="history.html" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
+                <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
+                    <h5 class="m-0 fw-bold">บันทึกเบิกสินค้าออก (OUT)</h5>
+                </div>
+                
+                <!-- 🟢 ปุ่มลิ้งก์ไปหน้าอัปโหลด Excel (โชว์เฉพาะหน้านี้) -->
+                <div>
+                    <a href="import.html" class="btn btn-outline-success shadow-sm">
+                        <i class="bi bi-file-earmark-excel me-1"></i> อัปโหลดจากไฟล์ Excel
+                    </a>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-7">
+                        <div class="card-custom">
+                            
+                            <div class="bg-light p-3 rounded-4 mb-4 border">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-cart-plus text-pink"></i> เพิ่มรายการสินค้าที่จะเบิก</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-7">
+                                        <select id="product-select" class="form-select">
+                                            <option value="">-- กำลังโหลดสินค้า --</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="number" id="qty" class="form-control" placeholder="จำนวน" min="1">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-dark w-100 h-100" onclick="addToCart()">เพิ่ม</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">รายการที่เลือก (<span id="cart-count">0</span> รายการ)</label>
+                                <ul id="cart-list" class="list-group mb-2">
+                                    <li class="list-group-item text-center text-muted small py-4 bg-light border-dashed">ยังไม่มีสินค้าในรายการ</li>
+                                </ul>
+                            </div>
+
+                            <hr class="mb-4">
+                            <form id="issueForm">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">วันที่ทำรายการ</label>
+                                    <input type="date" id="trans-date" class="form-control">
+                                    <small class="text-muted" style="font-size: 11px;">ปล่อยว่างไว้หากต้องการใช้วันที่ปัจจุบัน</small>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label small fw-bold">ช่องทางขาย</label>
+                                        <select id="channel-select" class="form-select">
+                                            <option value="-">-- เลือกช่องทาง --</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label small fw-bold">โปรโมชั่น / แคมเปญ</label>
+                                        <select id="promo-select" class="form-select">
+                                            <option value="-">-- เลือกโปรโมชั่น --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold">หมายเหตุ</label>
+                                    <input type="text" id="remark" class="form-control" placeholder="ระบุเลขคำสั่งซื้อ หรือเหตุผลการเบิก">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-pink w-100 py-3 shadow-sm" id="submitBtn" disabled>
+                                    ยืนยันเบิกออกทั้งหมด <i class="bi bi-send-fill ms-2"></i>
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyI9Z7iS9zpypETkAYtkNto7cgYnGvmxwc4rK7rws2hEN3NLsx589HXs9azPzFmxT_b/exec";
+        
+        let productsData = []; // เก็บข้อมูลสินค้าสำหรับอ้างอิงชื่อ
+        let cartItems = []; // ตะกร้าสินค้า
+
+        function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+
+        window.onload = async function() {
+            const user = localStorage.getItem('inventory_user');
+            if(!user) { window.location.href = "index.html"; return; }
+            initData();
+        }
+
+        async function initData() {
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getInitData" }) });
+                const data = await res.json();
+                
+                productsData = data.data.products; // เก็บไว้ใช้ตอนอ้างอิงชื่อ
+
+                let prodHtml = '<option value="">-- เลือกสินค้า --</option>';
+                productsData.forEach(p => {
+                    prodHtml += `<option value="${p.id}" data-name="${p.name}">${p.id} | ${p.name} (คงเหลือ: ${p.balance})</option>`;
+                });
+                document.getElementById('product-select').innerHTML = prodHtml;
+
+                let chanHtml = '<option value="-">-- เลือกช่องทาง --</option>';
+                data.data.settings.channels.forEach(c => { chanHtml += `<option value="${c}">${c}</option>`; });
+                document.getElementById('channel-select').innerHTML = chanHtml;
+
+                let promoHtml = '<option value="-">-- เลือกโปรโมชั่น --</option>';
+                data.data.settings.promotions.forEach(s => { promoHtml += `<option value="${s}">${s}</option>`; });
+                document.getElementById('promo-select').innerHTML = promoHtml;
+            } catch (err) {
+                document.getElementById('product-select').innerHTML = '<option value="">โหลดข้อมูลไม่สำเร็จ</option>';
+            }
+        }
+
+        // 🟢 ฟังก์ชันเพิ่มลงตะกร้า
+        function addToCart() {
+            const selectEl = document.getElementById('product-select');
+            const qtyEl = document.getElementById('qty');
+            
+            const productId = selectEl.value;
+            const qty = parseInt(qtyEl.value);
+
+            if(!productId) { alert("กรุณาเลือกสินค้า"); return; }
+            if(!qty || qty < 1) { alert("กรุณาระบุจำนวนให้ถูกต้อง"); return; }
+
+            const productName = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+
+            // ตรวจสอบว่ามีสินค้านี้ในตะกร้าหรือยัง ถ้ามีให้บวกจำนวนเพิ่ม
+            const existingItemIndex = cartItems.findIndex(item => item.productId === productId);
+            if(existingItemIndex !== -1) {
+                cartItems[existingItemIndex].qty += qty;
+            } else {
+                cartItems.push({ productId: productId, name: productName, qty: qty });
+            }
+
+            // เคลียร์ช่องจำนวน และอัปเดตหน้าจอ
+            qtyEl.value = '';
+            selectEl.value = '';
+            renderCart();
+        }
+
+        // 🟢 ฟังก์ชันลบออกจากตะกร้า
+        function removeCartItem(index) {
+            cartItems.splice(index, 1);
+            renderCart();
+        }
+
+        // 🟢 วาดหน้าจอรายการในตะกร้า
+        function renderCart() {
+            const listEl = document.getElementById('cart-list');
+            document.getElementById('cart-count').innerText = cartItems.length;
+
+            if(cartItems.length === 0) {
+                listEl.innerHTML = '<li class="list-group-item text-center text-muted small py-4 bg-light border-dashed">ยังไม่มีสินค้าในรายการ</li>';
+                document.getElementById('submitBtn').disabled = true;
+                return;
+            }
+
+            let html = '';
+            cartItems.forEach((item, index) => {
+                html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold text-dark">${item.name}</div>
+                        <div class="text-muted small">รหัส: ${item.productId}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-pink px-3 py-2 rounded-pill fs-6">${item.qty} ชิ้น</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeCartItem(${index})"><i class="bi bi-trash"></i></button>
+                    </div>
+                </li>`;
+            });
+            listEl.innerHTML = html;
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        // 🟢 ส่งข้อมูลทั้งหมดเข้า API
+        document.getElementById('issueForm').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            if(cartItems.length === 0) { alert("กรุณาเพิ่มสินค้าลงรายการอย่างน้อย 1 รายการ"); return; }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+
+            const payload = {
+                action: "saveTransaction",
+                type: "เบิกออก",
+                items: cartItems, // ส่งไปเป็น Array ตะกร้าสินค้า
+                date: document.getElementById('trans-date').value,
+                channel: document.getElementById('channel-select').value,
+                promotion: document.getElementById('promo-select').value, 
+                remark: document.getElementById('remark').value,
+                user: localStorage.getItem('inventory_user')
+            };
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.success) {
+                    alert(`บันทึกเบิกออก ${cartItems.length} รายการสำเร็จ!`);
+                    location.reload();
+                } else { 
+                    alert(result.message); 
+                    btn.disabled = false;
+                    btn.innerHTML = 'ยืนยันเบิกออกทั้งหมด <i class="bi bi-send-fill ms-2"></i>';
+                }
+            } catch (err) { 
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); 
+                btn.disabled = false;
+                btn.innerHTML = 'ยืนยันเบิกออกทั้งหมด <i class="bi bi-send-fill ms-2"></i>';
+            }
+        }
+
+        function logout() { localStorage.removeItem('inventory_user'); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
