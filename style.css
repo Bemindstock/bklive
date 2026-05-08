@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --brand-teal: #149E9A;
-    --brand-pink: #FA6BBA;
-    --bg-light: #FFF0F5;
+    --brand-teal: #0bfc0b;
+    --brand-pink: #b80efc;
+    --bg-light: #d909f5;
     --white: #ffffff;
     --text-dark: #2D3436;
     --text-muted: #636E72;
@@ -39,7 +39,7 @@ body {
 }
 
 .list-group-item:hover {
-    background-color: #f0f7f7;
+    background-color: #05f772;
     color: var(--brand-teal);
     transform: translateX(5px);
 }
